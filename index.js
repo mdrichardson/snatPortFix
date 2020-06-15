@@ -9,6 +9,25 @@ const restify = require('restify');
 // See https://aka.ms/bot-services to learn more about the different parts of a bot.
 const { BotFrameworkAdapter } = require('botbuilder');
 
+const  createRequestPolicyFactories  = require('./RequestPolicyHelper');
+const { CustomAxiosHttpClient } = require('./customAxiosHttpClient');
+const { ConnectorClient } = require('botframework-connector');
+
+BotFrameworkAdapter.prototype.createConnectorClientInternal = function (serviceUrl, credentials) {
+
+    const factories = createRequestPolicyFactories(credentials, 
+        {
+            requestTimeout: 1000 * 5, 
+            retryCount: 4, 
+            retryInterval: 1000 * 2, 
+            minRetryInterval: 1000 * 2, 
+            maxRetryInterval: 1000 * 6 
+        });
+    const client = new ConnectorClient(credentials, { baseUri: serviceUrl, httpClient: new CustomAxiosHttpClient(), requestPolicyFactories: factories });
+
+    return client;
+};
+
 // This bot's main dialog.
 const { EchoBot } = require('./bot');
 
